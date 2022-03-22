@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import matplotlib
 import math
+import random
 """
 Spyder Editor
 @TODO: Se puede reducir el número de funciones que buscan palabras con X letras:
@@ -22,6 +23,13 @@ def count_letter(string, letter):
     contador = 0
     for word in string:
         contador = contador + word.count(letter)
+    return contador
+
+def count_word(string, letter):
+    contador = 0
+    for char in string:
+        if (char.find(letter) != -1):
+            contador = contador + 1
     return contador
 
 ##
@@ -88,71 +96,10 @@ def most_letter(wordsList, letras1):
     lista.sort(key = lambda x: x[1], reverse = True)
     return lista
 
-##
-#función que busca palabras con dos letras específicas
-#atributos:
-    #wordList: lista de la que queremos obtener las palabras
-    #letra1: letra que queremos que contenga la lista objetivo
-    #letra2: segunda letra que queremos que contenga la lista objetivo
-#return
-    #lista con las palabras que incluyan las letras
-#TODO:
-    #
-##  
-def wordSearch2(wordsList, letra1, letra2):
-    newList =[]
-    newList = search_word(letra1, wordsList)
-    if newList == 0:
-        return 0
-    newList = search_word(letra2, newList)
-    return newList
-##
-#función que busca palabras con tres letras específicas
-#atributos:
-    #wordList: lista de la que queremos obtener las palabras
-    #letra1: letra que queremos que contenga la lista objetivo
-    #letra2: segunda letra que queremos que contenga la lista objetivo
-    #letra3: tercera letra que queremos que contenga la lista objetivo
-#return
-    #lista con las palabras que incluyan las letras
-#TODO:
-    #
-##  
-def wordSearch3(wordsList, letra1, letra2, letra3):
-    newList =[]
-    newList1 = []
-    newList2 = []
-    newList = search_word(letra1, wordsList)
-    if newList == 0:
-        return 0
-    newList1 = search_word(letra2, newList)
-    if newList1 == 0:
-        print("No hay palabras con ", letra1, letra2)
-        return 0
-    newList2 = search_word(letra3, newList1)
-    if newList2 == 0:
-        print("No hay palabras con ", letra1, letra2, letra3)
-        return 0
-    return newList2
-##
-#función que busca palabras con dos letras específicas
-#atributos:
-    #wordList: lista de la que queremos obtener las palabras
-    #letra1: letra que queremos que contenga la lista objetivo
-    #letra2: segunda letra que queremos que contenga la lista objetivo
-    #letra3: tercera
-    #letra4: cuarta
-#return
-    #lista con las palabras que incluyan las letras
-#TODO:
-    #
-##  
-def wordSearch4(wordsList, letra1, letra2, letra3, letra4):
-    newList =[]
-    newList = search_word(letra1, wordsList)
-    newList = search_word(letra2, newList)
-    newList = search_word(letra3, newList)
-    newList = search_word(letra4, newList)
+def wordSearch(wordList, string):
+    newList = wordList
+    for char in string:
+        newList = search_word(char, newList)
     return newList
 
 ##
@@ -208,18 +155,11 @@ def wordSearchNotPosition(wordList, letra1, posicion):
 ##  
 def wordSearchNoLetter(wordList, letra1):
     wordsWithLetter = []
-    contador = 0
-    for word in wordList:
-        if (word.find(letra1) == -1):
-            wordsWithLetter.append(word)
+    whateverList = wordList
     for char in letra1:
-        for word in wordsWithLetter:
-            if(word.find(char) == -1):
-                contador = contador + 1
-        if (contador == 0):
-            print("No hay palabras con ", letra1)
-            return 0
-        contador = 0
+        for word in whateverList:
+            if (word.find(letra1) == -1):
+                wordsWithLetter.append(word)
     return wordsWithLetter
 
 ##
@@ -234,7 +174,7 @@ def wordSearchNoLetter(wordList, letra1):
     #
 ##  
 def letterPosition(wordList, letra1):
-    timesLetter = [0, 0, 0, 0, 0]
+    timesLetter = [0.0, 0.0, 0.0, 0.0, 0.0]
     cuentaLetra = count_letter(wordList, letra1)
     for word in wordList:
         for i in range(0, 5):
@@ -245,23 +185,87 @@ def letterPosition(wordList, letra1):
     return timesLetter
 
 ##función en desarrollo, calculo de entropía y valor de información de las palabras
-def entropyLetter(wordList):
+def entropyLetter(wordList, letter):
     entropy = 0
-    letrasTotales = 5*10836
-    for char in letras:
-        cuentaLetra = letterPosition(wordList, char)
-        for position in cuentaLetra:
-            lettercount = count_letter(wordList, char)
-            probability = lettercount / letrasTotales
-        if probability==0: probability=1
-        entropy = entropy + (probability*math.log2(1/probability))
+    counting = count_word(wordList, letter)
+    p = counting/len(wordList)
+    if p == 0:
+        entropy = entropy;
+    else:
+        entropy =  p*math.log2(1/p)
     return entropy
+
+def entropyWord(wordList, string):
+    entropy = 0
+    for char in string:
+        entropy = entropy + entropyLetter(wordList, char)
+    return entropy
+
+def entropyWordPosition(wordList, string):
+    entropy = 0
+    timesLetter = [0, 0, 0, 0, 0]
+    timesWord = [0, 0, 0, 0, 0]
+    for char in string:
+        counting = count_word(wordList, char)
+        p = counting/len(wordList)
+        timesLetter = letterPosition(wordList, char)
+        timesWord[string.index(char)] = timesLetter[string.index(char)]*p
+    for i in range(0, len(timesLetter)):
+        if timesWord[i] == 0:
+            entropy = entropy
+        else:
+            entropy = entropy + timesWord[i]*math.log2(1/timesWord[i])
+    return entropy
+
+def entropyAllWord(wordList):
+    entropy = 0;
+    lista = [["0", 0]]
+    for word in wordList:
+        entropy = entropyWord(wordList, word)
+        lista.append([word, entropy])
+    lista.pop(0)
+    lista.sort(key = lambda x: x[1], reverse = True)
+    return lista
+    
+def entropyAllWordsPosition(wordList):
+    entropy = 0;
+    lista = [["0", 0]]
+    for word in wordList:
+        entropy = entropyWordPosition(wordList, word)
+        lista.append([word, entropy])
+    lista.pop(0)
+    lista.sort(key = lambda x: x[1], reverse = True)
+    return lista
+## WIP
+def compareWords(answer, solution, wordList):
+    solutionList = wordList
+    for char in answer:
+        if (solution.count(char) == 0):
+            solutionList = wordSearchNoLetter(solutionList, char)
+        elif (solution.count(char) == 1):
+            if answer.find(char) == solution.find(char):
+                solutionList = wordSearchPosition(solutionList, char, answer.find(char)+1)
+            elif answer.find(char) != solution.find(char):
+                solutionList = search_word(char, solutionList)
+        ##elif (solution.count(char)==2):
+            
+    return solutionList
+            
+def playGame(wordList):
+   wordIndex = random.randrange(0, len(wordList))
+   solutionWord = wordList[wordIndex]
+   print("Solucion es ", solutionWord)
+   solutionList = wordList
+   sortedList = entropyAllWordsPosition(wordList)
+   for i in range(0, 5):
+       sortedList = entropyAllWordsPosition(solutionList)
+       firstWord = sortedList[0][0]
+       solutionList = compareWords(firstWord, solutionWord, wordList)
+   sortedList = entropyAllWordsPosition(solutionList)
+   return sortedList[0][0]
             
 #main
-# a = input("Introduce una palabra de 5 letras: ")
-# while (len(a)!=5) :
-#     print("Su palabra no tiene 5 letras")
-#     a = input("Vuelva a introducir una palabra valida: ")
+
 # Open files with data
 palabras = open("words.txt", "rt", encoding="utf-8")
 data = palabras.read()
@@ -271,5 +275,40 @@ letras = alfabeto.read()
 alfabeto.close()
 # Pass the words in file to an array of words
 newWord = sliceToArray(data)
-# Sort letters in number of words they apear
-lista = most_letter(newWord, letras)
+newList = newWord
+letrasCorrectas = []
+contLetra = 0
+a = "1"
+b = "2"
+while((contLetra != 5) or (a != b)):
+    a = input("Introduce una palabra de 5 letras: ")
+    a.upper()
+    while (len(a)!=5) :
+         print("Su palabra no tiene 5 letras")
+         a = input("Vuelva a introducir una palabra valida: ")
+    while (newList.count(a) == 0):
+        a = input("Su palabra no está en las posibles palabras, vuelva a introducir una palabra válida: ")
+    b = input("Qué letras están en la palabra? ")
+    if (a == b):
+        print("HA GANADO EN " + str(contLetra+1) + " intentos")
+        break
+    newList = wordSearch(newList, b)
+    for char in a:
+        if b.find(char) == -1:
+            newList = wordSearchNoLetter(newList, char)
+    for char in b:
+        if letrasCorrectas.count(char) == 0:
+            c = int(input("En qué posición está " + char + ", si no sabe conteste 0: "))
+            if c == 0:
+                newList = wordSearchNotPosition(newList, char, a.find(char)+1)
+            else:
+                letrasCorrectas.append(char)
+                newList = wordSearchPosition(newList, char, c)
+    newList1 = entropyAllWordsPosition(newList)
+    if (len(newList1) > 3):
+        print("Su siguiente intento debería ser: " + newList1[0][0] + " " + newList1[1][0] + " " + newList1[2][0])
+    else:
+        print("Su siguiente intento debería ser: " + newList1[0][0])
+    contLetra = contLetra + 1
+if contLetra == 5:
+    print("HA PERDIDO")
